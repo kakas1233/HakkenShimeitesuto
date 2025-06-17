@@ -56,7 +56,7 @@ def calculate_variance(numbers, n):
 
 @st.cache_data(show_spinner=False)
 def find_best_seed_and_method(k, l, n):
-    seed_range = range(0, 10001, 100)
+    seed_range = range(0, 1000001, 100)
     count = int(k * l)
     best_variance = float('inf')
     best_method = None
