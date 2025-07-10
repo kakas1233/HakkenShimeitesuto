@@ -33,7 +33,7 @@ def autocorrelation_score(sequence):
     if var == 0:
         return 0.0
     autocorr = np.correlate(seq - mean, seq - mean, mode='full')[n-1:] / (var * n)
-    return float(np.mean(autocorr[1:]))
+    return float(abs(np.mean(autocorr[1:])))
 
 JST = timezone(timedelta(hours=9))
 os.makedirs("history", exist_ok=True)
