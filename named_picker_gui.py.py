@@ -28,13 +28,20 @@ def autocorrelation_score(sequence):
     n = len(seq)
     if n < 2:
         return 0.0
+
     mean = np.mean(seq)
     var = np.var(seq)
     if var == 0:
         return 0.0
-    autocorr = np.correlate(seq - mean, seq - mean, mode='full')[n-1:] / (var * n)
-    return float(abs(np.mean(autocorr[1:])))
 
+    autocorrs = []
+    for lag in range(1, n):  # 全ラグ範囲を使う
+        autocov = np.sum((seq[:n - lag] - mean) * (seq[lag:] - mean)) / (n - lag)
+        autocorr = autocov / var
+        autocorrs.append(abs(autocorr))  # 絶対値で評価
+
+    return float(max(autocorrs))  # 最大値を返す
+    
 JST = timezone(timedelta(hours=9))
 os.makedirs("history", exist_ok=True)
 
