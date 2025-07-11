@@ -282,17 +282,49 @@ def run_app():
         for i in range(len(names))
     ])
 
-# --- 指名履歴の表示直前 ---
-    if len(st.session_state[tab + "_used"]) > 1:
-        used_sequence = st.session_state[tab + "_used"]
-        pe = permutation_entropy(used_sequence)
-        ac = autocorrelation_score(used_sequence)
-        st.subheader("📊 指名シーケンスの評価指標")
-        st.markdown(f"- 順列エントロピー: **{pe:.4f}** （1に近いほどランダム）")
-        st.markdown(f"- 自己相関スコア: **{ac:.4f}** （0に近いほどランダム）")
-    else:
-        st.info("指名履歴が2回以上になると、順列エントロピーと自己相関スコアを表示します。")
+if tab + "_pool" in st.session_state and st.session_state[tab + "_pool"]:
+    # ------------------ OEIS照合を先に表示 ------------------
+    import requests
 
+    used_seq = st.session_state.get(tab + "_used", [])
+
+    if used_seq:
+        st.subheader("🧬 OEISとの照合")
+
+        available_lengths = sorted(list(set([len(used_seq), 10, 15, 20])))
+        window_length = st.selectbox("🔢 照合する履歴の長さ", available_lengths, index=0)
+
+        if len(used_seq) >= window_length:
+            target_seq = used_seq[-window_length:]
+            seq_str = ",".join(str(x) for x in target_seq)
+
+            with st.spinner(f"OEISに照合中: {seq_str}"):
+                try:
+                    response = requests.get(
+                        "https://oeis.org/search",
+                        params={"q": seq_str, "fmt": "json"},
+                        timeout=10
+                    )
+                    data = response.json()
+
+                    if "results" in data and data["results"]:
+                        st.success(f"🎯 {len(data['results'])} 件一致！")
+                        for result in data["results"][:3]:
+                            st.markdown(f"""
+**🆔 OEIS {result['number']}**  
+📛 {result['name']}  
+📝 {result['data'][:80]}...  
+🔗 [OEISページ](https://oeis.org/{result['number']})
+""")
+                    else:
+                        st.info("❌ 一致する既知の整数列は見つかりませんでした。")
+                except Exception as e:
+                    st.error(f"OEIS照合エラー: {e}")
+        else:
+            st.info(f"⚠️ 履歴が {window_length} 件未満のため、照合できません。")
+    else:
+        st.info("👣 指名履歴が1件もないため、OEIS照合は行われません。")
+        
     if len(df) > 0:
         st.subheader("📋 指名履歴（指名された順）")
         ordered_df = pd.DataFrame([
